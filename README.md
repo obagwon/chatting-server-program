@@ -60,6 +60,9 @@ src/main/java/
 ```
 
 ## 6. 실행 방법
+### 방법 A) Maven 명령어로 실행 (터미널)
+사전 조건: JDK 17, Maven 설치
+
 ### 빌드
 ```bash
 mvn clean package
@@ -82,6 +85,22 @@ mvn exec:java -Dexec.mainClass=client.ChatClient
 ```bash
 mvn exec:java -Dexec.mainClass=client.ChatClient -Dexec.args="127.0.0.1"
 ```
+
+### 방법 B) IntelliJ에서 Maven 설치 없이 실행
+IntelliJ IDEA는 내장 Maven(또는 Maven Wrapper)을 사용할 수 있어서, 로컬에 Maven을 별도 설치하지 않아도 실행 가능합니다.
+
+1. IntelliJ에서 프로젝트를 엽니다.
+2. `File > Project Structure > Project`에서 SDK를 **JDK 17**로 설정합니다.
+3. 우측 Maven 탭에서 새로고침(Refresh)을 눌러 의존성을 동기화합니다.
+4. 서버 실행:
+   - `src/main/java/server/ChatServer.java` 열기
+   - `main` 함수 옆 실행 버튼(▶) 클릭
+5. 클라이언트 실행:
+   - `src/main/java/client/ChatClient.java` 열기
+   - `main` 함수 옆 실행 버튼(▶) 클릭
+6. 원격 호스트로 클라이언트를 실행하려면 Run Configuration의 **Program arguments**에 예: `127.0.0.1` 입력
+
+참고: IntelliJ 내장 Maven 대신 로컬 Maven을 쓰고 싶다면 `Settings > Build, Execution, Deployment > Build Tools > Maven`에서 Maven home을 직접 지정할 수 있습니다.
 
 ## 7. 서버 설정값
 `server.ServerConfig`에서 관리합니다.
