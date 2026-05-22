@@ -60,7 +60,38 @@ src/main/java/
 ```
 
 ## 6. 실행 방법
-### 방법 A) Maven 명령어로 실행 (터미널)
+### 방법 A) PowerShell 스크립트로 실행 (Maven 없이)
+사전 조건: JDK 설치 또는 IntelliJ가 내려받은 JDK가 `C:\Users\<사용자>\.jdks` 아래에 있어야 합니다.
+
+### 빌드
+```powershell
+.\compile.ps1
+```
+
+### 서버 실행
+```powershell
+.\run-server.ps1
+```
+PowerShell 실행 정책 때문에 막히면 다음처럼 실행합니다.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run-server.ps1
+```
+서버 콘솔에서 종료하려면 다음을 입력합니다.
+```text
+/stop
+```
+
+### 클라이언트 실행
+새 터미널을 열고 실행합니다.
+```powershell
+.\run-client.ps1
+```
+원격 호스트에 접속하려면 호스트를 넘깁니다.
+```powershell
+.\run-client.ps1 127.0.0.1
+```
+
+### 방법 B) Maven 명령어로 실행 (터미널)
 사전 조건: JDK 17, Maven 설치
 
 ### 빌드
@@ -86,7 +117,7 @@ mvn exec:java -Dexec.mainClass=client.ChatClient
 mvn exec:java -Dexec.mainClass=client.ChatClient -Dexec.args="127.0.0.1"
 ```
 
-### 방법 B) IntelliJ에서 Maven 설치 없이 실행
+### 방법 C) IntelliJ에서 Maven 설치 없이 실행
 IntelliJ IDEA는 내장 Maven(또는 Maven Wrapper)을 사용할 수 있어서, 로컬에 Maven을 별도 설치하지 않아도 실행 가능합니다.
 
 1. IntelliJ에서 프로젝트를 엽니다.

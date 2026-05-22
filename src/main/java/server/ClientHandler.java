@@ -111,7 +111,12 @@ public class ClientHandler implements Runnable {
     }
     private void roomList() { Message m = Message.of(MessageType.ROOM_LIST_RESULT, true, "방 목록"); m.setRooms(rooms.listRooms()); safeSend(m); }
     private void joinRoom(Message request) {
-        boolean ok = rooms.joinRoom(request.getRoomName(), session);
+        String name = request.getRoomName();
+        if (name == null || name.trim().isEmpty() || name.length() > 20) {
+            safeSend(Message.of(MessageType.JOIN_ROOM_FAIL, false, "방 이름은 1~20자여야 합니다."));
+            return;
+        }
+        boolean ok = rooms.joinRoom(name.trim(), session);
         safeSend(Message.of(ok ? MessageType.JOIN_ROOM_SUCCESS : MessageType.JOIN_ROOM_FAIL, ok, ok ? "채팅방 입장 성공" : "방 입장 실패"));
     }
     private void leaveRoom() { boolean ok = rooms.leaveRoom(session); safeSend(Message.of(ok ? MessageType.LEAVE_ROOM_SUCCESS : MessageType.LEAVE_ROOM_FAIL, ok, ok ? "채팅방 퇴장 성공" : "입장한 방이 없습니다.")); }

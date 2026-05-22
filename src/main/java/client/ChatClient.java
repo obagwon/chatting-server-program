@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Interactive console client for the chat JSON protocol. */
 public class ChatClient {
@@ -14,7 +15,7 @@ public class ChatClient {
     private PrintWriter writer;
     private BufferedReader reader;
     private String token;
-    private boolean inRoom;
+    private final AtomicBoolean inRoom = new AtomicBoolean(false);
 
     public static void main(String[] args) throws Exception { new ChatClient().start(args.length > 0 ? args[0] : "127.0.0.1"); }
 
@@ -29,7 +30,7 @@ public class ChatClient {
             System.out.println(response.getMessage());
             if (response.getType() != MessageType.LOGIN_SUCCESS) return;
             token = response.getToken(); printHelp();
-            ServerMessageListener listener = new ServerMessageListener(reader);
+            ServerMessageListener listener = new ServerMessageListener(reader, inRoom);
             new Thread(listener, "server-message-listener").start();
             while (scanner.hasNextLine()) {
                 String input = scanner.nextLine();
@@ -37,7 +38,7 @@ public class ChatClient {
                 if (input.startsWith("/")) {
                     if (!handleCommand(input)) break;
                 } else {
-                    if (!inRoom) { System.out.println("먼저 /join 또는 /create로 방에 입장하세요."); continue; }
+                    if (!inRoom.get()) { System.out.println("먼저 /join 또는 /create로 방에 입장하세요."); continue; }
                     Message chat = authed(MessageType.CHAT); chat.setMessage(input); send(chat);
                 }
             }
@@ -50,9 +51,9 @@ public class ChatClient {
         switch (p[0]) {
             case "/help" -> printHelp();
             case "/rooms" -> send(authed(MessageType.ROOM_LIST));
-            case "/create" -> { if (p.length < 2) usage("/create [방이름]"); else { Message m = authed(MessageType.CREATE_ROOM); m.setRoomName(p[1]); send(m); inRoom = true; } }
-            case "/join" -> { if (p.length < 2) usage("/join [방이름]"); else { Message m = authed(MessageType.JOIN_ROOM); m.setRoomName(p[1]); send(m); inRoom = true; } }
-            case "/leave" -> { send(authed(MessageType.LEAVE_ROOM)); inRoom = false; }
+            case "/create" -> { if (p.length < 2) usage("/create [방이름]"); else { Message m = authed(MessageType.CREATE_ROOM); m.setRoomName(p[1]); send(m); } }
+            case "/join" -> { if (p.length < 2) usage("/join [방이름]"); else { Message m = authed(MessageType.JOIN_ROOM); m.setRoomName(p[1]); send(m); } }
+            case "/leave" -> send(authed(MessageType.LEAVE_ROOM));
             case "/users" -> send(authed(MessageType.USER_LIST));
             case "/w" -> { if (p.length < 3) usage("/w [닉네임] [메시지]"); else { Message m = authed(MessageType.WHISPER); m.setTargetNickname(p[1]); m.setMessage(p[2]); send(m); } }
             case "/quit" -> { send(authed(MessageType.LOGOUT)); return false; }

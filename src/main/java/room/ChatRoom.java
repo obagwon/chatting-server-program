@@ -20,4 +20,10 @@ public class ChatRoom {
             try { member.send(message); } catch (RuntimeException ignored) { }
         }
     }
+    public void broadcastExcept(Message message, String excludedNickname) {
+        for (ClientSession member : members.values()) {
+            if (member.getNickname().equals(excludedNickname)) continue;
+            try { member.send(message); } catch (RuntimeException ignored) { }
+        }
+    }
 }

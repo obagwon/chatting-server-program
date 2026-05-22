@@ -20,11 +20,14 @@ public class RoomManager {
         return true;
     }
     public synchronized boolean joinRoom(String roomName, ClientSession session) {
-        ChatRoom room = rooms.get(roomName);
+        if (roomName == null) return false;
+        String normalizedRoomName = roomName.trim();
+        if (normalizedRoomName.isEmpty()) return false;
+        ChatRoom room = rooms.get(normalizedRoomName);
         if (room == null || session.getCurrentRoomName() != null) return false;
-        room.addMember(session); session.setCurrentRoomName(roomName);
-        logService.log("ROOM_JOIN", "room=" + roomName + " nickname=" + session.getNickname());
-        room.broadcast(Message.system(session.getNickname() + "님이 입장했습니다."));
+        room.addMember(session); session.setCurrentRoomName(normalizedRoomName);
+        logService.log("ROOM_JOIN", "room=" + normalizedRoomName + " nickname=" + session.getNickname());
+        room.broadcastExcept(Message.system(session.getNickname() + "님이 입장했습니다."), session.getNickname());
         return true;
     }
     public synchronized boolean leaveRoom(ClientSession session) {

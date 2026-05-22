@@ -58,6 +58,8 @@ public class Gson {
             m.setMessage(values.get("message")); m.setNickname(values.get("nickname")); m.setToken(values.get("token"));
             m.setRoomName(values.get("roomName")); m.setSender(values.get("sender"));
             m.setTargetNickname(values.get("targetNickname")); m.setTimestamp(values.get("timestamp"));
+            if (values.containsKey("rooms")) m.setRooms(readRooms(values.get("rooms")));
+            if (values.containsKey("users")) m.setUsers(readUsers(values.get("users")));
             return m;
         } catch (Exception e) { throw new JsonSyntaxException("Invalid JSON: " + json, e); }
     }
@@ -76,11 +78,83 @@ public class Gson {
             i = skip(json, i);
             String value;
             if (json.charAt(i) == '"') { value = readString(json, i); i = nextAfterString(json, i); }
-            else { int start = i; while (i < json.length() && ",}".indexOf(json.charAt(i)) < 0) i++; value = json.substring(start, i).trim(); }
+            else { int start = i; i = nextAfterValue(json, i); value = json.substring(start, i).trim(); }
             map.put(key, "null".equals(value) ? null : value);
         }
         return map;
     }
+
+    private List<RoomInfo> readRooms(String json) {
+        List<RoomInfo> rooms = new ArrayList<>();
+        if (json == null || "null".equals(json)) return rooms;
+        json = json.trim();
+        if (!json.startsWith("[") || !json.endsWith("]")) throw new JsonSyntaxException("array expected");
+        String body = json.substring(1, json.length() - 1).trim();
+        if (body.isEmpty()) return rooms;
+        for (String item : splitTopLevel(body)) {
+            Map<String, String> room = flatObject(item);
+            String roomName = room.get("roomName");
+            String memberCount = room.get("memberCount");
+            rooms.add(new RoomInfo(roomName, memberCount == null ? 0 : Integer.parseInt(memberCount)));
+        }
+        return rooms;
+    }
+
+    private List<String> readUsers(String json) {
+        List<String> users = new ArrayList<>();
+        if (json == null || "null".equals(json)) return users;
+        json = json.trim();
+        if (!json.startsWith("[") || !json.endsWith("]")) throw new JsonSyntaxException("array expected");
+        String body = json.substring(1, json.length() - 1).trim();
+        if (body.isEmpty()) return users;
+        for (String item : splitTopLevel(body)) {
+            item = item.trim();
+            users.add("null".equals(item) ? null : readString(item, 0));
+        }
+        return users;
+    }
+
+    private List<String> splitTopLevel(String json) {
+        List<String> parts = new ArrayList<>();
+        int start = 0, depth = 0;
+        boolean inString = false, escaped = false;
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (inString) {
+                if (escaped) escaped = false;
+                else if (c == '\\') escaped = true;
+                else if (c == '"') inString = false;
+            } else if (c == '"') inString = true;
+            else if (c == '{' || c == '[') depth++;
+            else if (c == '}' || c == ']') depth--;
+            else if (c == ',' && depth == 0) {
+                parts.add(json.substring(start, i).trim());
+                start = i + 1;
+            }
+        }
+        parts.add(json.substring(start).trim());
+        return parts;
+    }
+
+    private int nextAfterValue(String s, int i) {
+        int depth = 0;
+        boolean inString = false, escaped = false;
+        for (; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (inString) {
+                if (escaped) escaped = false;
+                else if (c == '\\') escaped = true;
+                else if (c == '"') inString = false;
+            } else if (c == '"') inString = true;
+            else if (c == '{' || c == '[') depth++;
+            else if (c == '}' || c == ']') {
+                if (depth == 0) return i;
+                depth--;
+            } else if (c == ',' && depth == 0) return i;
+        }
+        return i;
+    }
+
     private int skip(String s, int i) { while (i < s.length() && Character.isWhitespace(s.charAt(i))) i++; return i; }
     private String readString(String s, int i) {
         if (s.charAt(i) != '"') throw new JsonSyntaxException("string expected");
